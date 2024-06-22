@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { Pool } = require('pg');
-const twilio = require('twilio');
+const fetch = require('node-fetch');
 const path = require('path');
 
 // Database connection
@@ -13,10 +13,9 @@ const pool = new Pool({
     port: 5432,
 });
 
-// Twilio configuration
-const accountSid = 'ACb2f076a8c18c0b735a8b014076fe3aff'; // Replace with your Twilio account SID
-const authToken = '615093da92b3c47a15590dbfc71993de'; // Replace with your Twilio auth token
-const client = new twilio(accountSid, authToken);
+// Telegram configuration
+const telegramToken = '7490473003:AAG0Llrd5V60Epi3KRPCsFpZCDJec4o3ETI'; // Replace with your Telegram bot token
+const telegramChatId = '628936187'; // Replace with the recipient's chat ID
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -53,16 +52,28 @@ app.post('/book-appointment', async (req, res) => {
 
             const appointment = result.rows[0];
 
-            // Send SMS to the barbershop owner
-            const messageOwner = await client.messages.create({
-                body: `\nNew Appointment Booked\nClient: ${name}\nPhone Number: ${phone}\nDate: ${date}\nTime: ${time}`,
-                to: '+77022537829', // Replace with the owner's phone number
-                from: '+16207984467' // Replace with your Twilio number
+            // Send message to the barbershop owner on Telegram
+            const messageText = `\nNew Appointment Booked\nClient: ${name}\nPhone Number: ${phone}\nDate: ${date}\nTime: ${time}`;
+            const telegramUrl = `https://api.telegram.org/bot${telegramToken}/sendMessage`;
+
+            const response = await fetch(telegramUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: telegramChatId,
+                    text: messageText
+                })
             });
 
-            console.log('Owner message SID:', messageOwner.sid);
+            const data = await response.json();
 
-            res.status(201).json({ message: 'Appointment booked successfully', appointment });
+            if (data.ok) {
+                console.log('Message sent to Telegram:', data.result);
+                res.status(201).json({ message: 'Appointment booked successfully', appointment });
+            } else {
+                console.error('Error sending message to Telegram:', data);
+                res.status(500).json({ message: 'Internal server error' });
+            }
         }
     } catch (error) {
         console.error('Error booking appointment:', error);
