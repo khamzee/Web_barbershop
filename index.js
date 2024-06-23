@@ -6,10 +6,10 @@ const path = require('path');
 
 // Database connection
 const pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'barbershop',
-    password: '123456',
+    user: 'appointments_d9bx_user',
+    host: 'dpg-cps340g8fa8c7390iq50-a',
+    database: 'appointments_d9bx',
+    password: 'Ow6JD57k0uJYZUy6oywhwMQyGTCh9P5I',
     port: 5432,
 });
 
